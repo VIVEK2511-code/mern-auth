@@ -2,9 +2,10 @@ import express from "express";
 import dotenv from "dotenv"
 import db from "./utils/db.js"
 import cors from "cors"
-
+import cookieParser from "cookie-parser";
 //import all routes
 import userRoutes from "./routes/user.routes.js"
+
 const app = express();
 
 app.use(cors({
@@ -15,6 +16,7 @@ app.use(cors({
 }
 
 ));
+app.use(cookieParser());
 app.use(express.json())
 
 app.use(express.urlencoded({extended:true}));

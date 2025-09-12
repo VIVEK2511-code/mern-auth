@@ -4,6 +4,7 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
+import cookie from "cookie-parser"
 dotenv.config();
 export const registerUser=async(req,res)=>{
     //get data
@@ -148,6 +149,25 @@ export const login=async (req,res)=>{
       process.env.JWT_SECRET,
       {expiresIn:'24h'}
     );
+
+    const cookieOptions={
+      httpOnly:true,
+      secure:true,
+      maxAge:24*60*60*1000,
+    }
+   
+    res.cookie("token",token,cookieOptions)
+    
+
+    res.status(200).json({
+      success:true,
+      message:"User logged in successfully",
+      user:{
+        name:user.name,
+        email:user.email,
+        role:user.role
+      }
+    })
   }catch(err){
 
   }
