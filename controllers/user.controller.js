@@ -1,5 +1,10 @@
 import User from "../models/User.model.js";
 import crypto from "crypto"
+import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+import bcrypt from "bcryptjs"
+import jwt from "jsonwebtoken"
+dotenv.config();
 export const registerUser=async(req,res)=>{
     //get data
     //validate data
@@ -40,10 +45,39 @@ export const registerUser=async(req,res)=>{
 
     user.verificationToken=token;
     await user.save();
-    
 
+    //send email to user
+  const transporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST,   // 👈 from .env
+  port: process.env.MAIL_PORT,   // 👈 from .env
+  auth: {
+    user: process.env.MAIL_USER, // 👈 from .env
+    pass: process.env.MAIL_PASS, // 👈 from .env
+  },
+});
+
+const mailOptions = {
+  from: "process.env.MAILTRAP_SENDEREMAIL",  // sender address
+  to: "use.email",                 // recipient address
+  subject: "Verify your email",           // subject line
+  text: `please click on the following link:${process.env.BASE_URL}/api/v1/users/verify/${token}`,   // plain text body
+  
+};
+await transporter.sendMail(mailOptions);
+
+res.status(200).json({
+  message:"User registered successfully please check your email to verify your email address",
+  success:true
+})
 
     }catch(err){
+
+      res.status(400).json({
+        message:"Something went wrong",
+        success:false,
+        error:err.message
+      })
+
 
     }
     
@@ -54,3 +88,69 @@ export const registerUser=async(req,res)=>{
 
   
 }
+
+
+export const verifyUser=async(req,res)=>{
+
+  //got toekn from url
+  //validate
+  //find user based on token
+  //if not
+  //set isverified to true
+  //remove verification token
+
+  const {token}=req.params;
+  console.log(token);
+  if(!token){
+    return res.status(400).json({
+      message:"Token is missing"
+    })
+  }
+
+  const user=await User.findOne({verificationToken:token})
+    if(!user){
+      return res.status(400).json({
+        message:"Invalid token"
+      })
+    }
+
+    user.isVerified=true;
+    user.verificationToken=undefined;
+    await user.save();
+   
+}
+
+
+export const login=async (req,res)=>{
+  const {email,password}=req.body;
+  if(!email || !password){
+    return res.status(400).json({
+      message:"All fields are required"
+    })
+  }
+
+  try{
+    const user=await User.findOne({email})
+    if(!user){
+      return res.status(400).json({
+        message:"User does not exist or password is incorrect"
+      })
+    }
+    const isMatch=await bcrypt.compare(password,user.password)
+    console.log(isMatch);
+    if(!isMatch){
+      return res.status(400).json({
+        message:"ivalid email or password"
+      })
+    }
+
+    jwt.sign({id:user._id,role:user.role},
+      process.env.JWT_SECRET,
+      {expiresIn:'24h'}
+    );
+  }catch(err){
+
+  }
+}
+
+
