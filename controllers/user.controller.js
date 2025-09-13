@@ -174,3 +174,22 @@ export const login=async (req,res)=>{
 }
 
 
+
+
+
+export const getMe=async(req,res)=>{
+  try{
+
+  }catch(error){
+
+  }
+}
+
+
+export const logoutUser=async(req,res)=>{
+
+}
+
+
+
+
